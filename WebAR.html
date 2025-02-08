@@ -26,10 +26,31 @@
 
         </a-marker>
 
-        <!-- Fixed Camera to Prevent Zoom Issues -->
-        <a-entity camera position="0 0 10" fov="120"></a-entity>
+        <!-- Camera with ID for JavaScript control -->
+        <a-entity id="camera" camera position="0 0 10" fov="80"></a-entity>
 
     </a-scene>
+
+    <!-- JavaScript for Manual Zoom -->
+    <script>
+        const camera = document.querySelector("#camera");
+        let fov = 80; // Initial Field of View (default zoom)
+
+        // Function to handle zooming
+        function zoomCamera(event) {
+            if (event.deltaY > 0) {
+                fov += 5; // Zoom Out
+            } else {
+                fov -= 5; // Zoom In
+            }
+            fov = Math.max(50, Math.min(120, fov)); // Limit Zoom Range
+            camera.setAttribute("camera", "fov", fov);
+        }
+
+        // Add Event Listener for Scrolling (Mouse or Touch)
+        document.addEventListener("wheel", zoomCamera);
+        document.addEventListener("touchmove", zoomCamera);
+    </script>
 
 </body>
 </html>
