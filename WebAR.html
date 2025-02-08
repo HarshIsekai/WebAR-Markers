@@ -31,15 +31,14 @@
     <a-scene embedded arjs="sourceType: webcam; sourceWidth: 1920; sourceHeight: 1080; displayWidth: 1280; displayHeight: 720;">
         
         <!-- Image Marker (menu card) -->
-<a-marker type="pattern" url="https://harshIsekai.github.io/WebAR-Markers/menu.patt">
-    <a-image src="https://raw.githubusercontent.com/HarshIsekai/WebAR-Markers/main/burger.png"
-        position="0 0 0"
+    <a-marker type="pattern" url="https://harshIsekai.github.io/WebAR-Markers/menu.patt">
+      <a-image src="https://raw.githubusercontent.com/HarshIsekai/WebAR-Markers/main/burger.png"
+        position="0 0.5 0"
         width="2"
         height="1.2">
-    </a-image>
-</a-marker>
-
-        </a-marker>
+      </a-image>
+    </a-marker>
+        <a-plane position="0 0 0" width="2" height="2" color="red"></a-plane>
 
         <!-- Camera with High-Quality Settings -->
         <a-entity id="camera" camera position="0 0 5" fov="80"></a-entity>
