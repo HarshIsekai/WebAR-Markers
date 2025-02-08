@@ -12,8 +12,8 @@
 <body style="margin: 0; overflow: hidden;">
 
     <!-- A-Frame AR Scene -->
-    <a-scene embedded arjs>
-
+    <a-scene embedded arjs="sourceType: webcam; sourceWidth: 1280; sourceHeight: 720; displayWidth: 1280; displayHeight: 720;">
+        
         <!-- Image Marker (menu card) -->
         <a-marker type="pattern" url="https://harshIsekai.github.io/WebAR-Markers/menu.patt">
 
@@ -26,7 +26,8 @@
 
         </a-marker>
 
-        <a-entity camera></a-entity>
+        <!-- Fixed Camera to Prevent Zoom Issues -->
+        <a-entity camera position="0 0 5" fov="80"></a-entity>
 
     </a-scene>
 
