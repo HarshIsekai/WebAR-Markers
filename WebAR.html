@@ -8,11 +8,27 @@
     <!-- Load A-Frame and AR.js -->
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.2/aframe/build/aframe-ar.min.js"></script>
-</head>
-<body style="margin: 0; overflow: hidden; touch-action: none;">
 
-    <!-- A-Frame AR Scene -->
-    <a-scene embedded arjs="trackingMethod: best; detectionMode: mono_and_matrix; sourceType: webcam; sourceWidth: 1920; sourceHeight: 1080; displayWidth: 1280; displayHeight: 720;">
+    <!-- Force High-Quality Camera -->
+    <script>
+      navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+          facingMode: "environment"
+        }
+      }).then((stream) => {
+        let videoTracks = stream.getVideoTracks();
+        console.log("Using camera:", videoTracks[0].label);
+      }).catch((err) => {
+        console.error("Error accessing camera: ", err);
+      });
+    </script>
+</head>
+<body style="margin: 0; overflow: hidden;">
+
+    <!-- A-Frame AR Scene with High-Quality Camera Settings -->
+    <a-scene embedded arjs="sourceType: webcam; sourceWidth: 1920; sourceHeight: 1080; displayWidth: 1280; displayHeight: 720;">
         
         <!-- Image Marker (menu card) -->
         <a-marker type="pattern" url="https://harshIsekai.github.io/WebAR-Markers/menu.patt">
@@ -26,62 +42,10 @@
 
         </a-marker>
 
-        <!-- Camera with Zoom Controls -->
+        <!-- Camera with High-Quality Settings -->
         <a-entity id="camera" camera position="0 0 5" fov="80"></a-entity>
 
-    <a-scene embedded arjs="trackingMethod: best; detectionMode: mono_and_matrix; debugUIEnabled: true; sourceType: webcam;">
-
-    <!-- JavaScript for Scroll & Pinch Zoom -->
-    <script>
-        const camera = document.querySelector("#camera");
-        let fov = 80; // Initial Field of View
-
-        // Function to handle scroll zooming
-        function zoomCamera(event) {
-            event.preventDefault(); // Prevent page scrolling
-            if (event.deltaY > 0) {
-                fov += 5; // Zoom Out
-            } else {
-                fov -= 5; // Zoom In
-            }
-            fov = Math.max(50, Math.min(120, fov)); // Limit zoom range
-            camera.setAttribute("camera", "fov", fov);
-        }
-
-        // Touch Gesture Zoom Variables
-        let initialDistance = null;
-
-        function getTouchDistance(event) {
-            let dx = event.touches[0].clientX - event.touches[1].clientX;
-            let dy = event.touches[0].clientY - event.touches[1].clientY;
-            return Math.sqrt(dx * dx + dy * dy);
-        }
-
-        function handleTouchMove(event) {
-            if (event.touches.length === 2) { // If two fingers are touching
-                let distance = getTouchDistance(event);
-                if (initialDistance === null) {
-                    initialDistance = distance;
-                } else {
-                    let zoomFactor = (distance - initialDistance) * 0.05; // Adjust sensitivity
-                    fov -= zoomFactor;
-                    fov = Math.max(50, Math.min(120, fov)); // Limit zoom range
-                    camera.setAttribute("camera", "fov", fov);
-                    initialDistance = distance;
-                }
-                event.preventDefault();
-            }
-        }
-
-        function handleTouchEnd() {
-            initialDistance = null; // Reset zoom when touch ends
-        }
-
-        // Add event listeners
-        document.addEventListener("wheel", zoomCamera, { passive: false }); // Scroll zoom
-        document.addEventListener("touchmove", handleTouchMove, { passive: false }); // Pinch zoom
-        document.addEventListener("touchend", handleTouchEnd);
-    </script>
+    </a-scene>
 
 </body>
 </html>
