@@ -28,7 +28,7 @@
 <body style="margin: 0; overflow: hidden;">
 
     <!-- A-Frame AR Scene with High-Quality Camera Settings -->
-    <a-scene embedded arjs="trackingMethod: best; detectionMode: mono_and_matrix; sourceType: webcam;">
+    <a-scene embedded arjs="sourceType: webcam; sourceWidth: 1920; sourceHeight: 1080; displayWidth: 1280; displayHeight: 720;">
         
         <!-- Image Marker (menu card) -->
         <a-marker type="pattern" url="https://harshIsekai.github.io/WebAR-Markers/menu.patt">
@@ -41,7 +41,6 @@
             </a-image>
 
         </a-marker>
-         <a-plane position="0 0 0" width="2" height="2" color="red"></a-plane>
 
         <!-- Camera with Zoom Controls -->
         <a-entity id="camera" camera position="0 0 5" fov="80"></a-entity>
@@ -53,18 +52,45 @@
         const camera = document.querySelector("#camera");
         let fov = 80; // Initial Field of View
 
-        function zoomCamera(event) {
-            event.preventDefault(); // Prevent page scrolling
-            if (event.deltaY > 0) {
-                fov += 5; // Zoom Out
-            } else {
-                fov -= 5; // Zoom In
-            }
+        function zoomCamera(delta) {
+            fov += delta;
             fov = Math.max(50, Math.min(120, fov)); // Limit zoom range
             camera.setAttribute("camera", "fov", fov);
         }
 
-        document.addEventListener("wheel", zoomCamera, { passive: false });
+        // Handle mouse wheel for desktop
+        document.addEventListener("wheel", (event) => {
+            event.preventDefault();
+            zoomCamera(event.deltaY > 0 ? 5 : -5);
+        }, { passive: false });
+
+        // Handle touch events for mobile
+        let initialDistance = null;
+
+        document.addEventListener("touchstart", (event) => {
+            if (event.touches.length === 2) {
+                initialDistance = Math.hypot(
+                    event.touches[0].clientX - event.touches[1].clientX,
+                    event.touches[0].clientY - event.touches[1].clientY
+                );
+            }
+        });
+
+        document.addEventListener("touchmove", (event) => {
+            if (event.touches.length === 2 && initialDistance !== null) {
+                const currentDistance = Math.hypot(
+                    event.touches[0].clientX - event.touches[1].clientX,
+                    event.touches[0].clientY - event.touches[1].clientY
+                );
+                const delta = (currentDistance - initialDistance) / 10;
+                zoomCamera(-delta);
+                initialDistance = currentDistance;
+            }
+        });
+
+        document.addEventListener("touchend", () => {
+            initialDistance = null;
+        });
     </script>
 
 </body>
