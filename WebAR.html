@@ -28,7 +28,7 @@
 <body style="margin: 0; overflow: hidden;">
 
     <!-- A-Frame AR Scene with High-Quality Camera Settings -->
-    <a-scene embedded arjs="sourceType: webcam; sourceWidth: 1920; sourceHeight: 1080; displayWidth: 1280; displayHeight: 720;">
+    <a-scene embedded arjs="trackingMethod: best; detectionMode: mono_and_matrix; sourceType: webcam;">
         
         <!-- Image Marker (menu card) -->
         <a-marker type="pattern" url="https://harshIsekai.github.io/WebAR-Markers/menu.patt">
@@ -41,6 +41,7 @@
             </a-image>
 
         </a-marker>
+         <a-plane position="0 0 0" width="2" height="2" color="red"></a-plane>
 
         <!-- Camera with Zoom Controls -->
         <a-entity id="camera" camera position="0 0 5" fov="80"></a-entity>
