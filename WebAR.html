@@ -2,89 +2,137 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>WebAR Menu with Pinch Zoom</title>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.2/aframe/build/aframe-ar.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fixed WebAR Menu</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
 </head>
 <body style="margin: 0; overflow: hidden;">
 
-<a-scene embedded arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3;">
-    
-    <!-- Scalable Content Container -->
-    <a-marker type="pattern" url="https://harshIsekai.github.io/WebAR-Markers/menu.patt">
-        <a-entity id="scalable-content" scale="0.8 0.8 0.8">
-            <!-- Menu Content Here -->
-            <a-image src="menu.jpg" position="0 0.5 0" width="1.5" height="1"></a-image>
-            <!-- Add other menu items -->
+<a-scene 
+    vr-mode-ui="enabled: false"
+    embedded 
+    arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3; debugUIEnabled: false;"
+    renderer="logarithmicDepthBuffer: true; precision: medium;"
+    gesture-detector
+    id="scene">
+
+    <!-- Marker-based Content -->
+    <a-marker 
+        type="pattern" 
+        url="https://harshisekai.github.io/WebAR-Markers/menu.patt"
+        id="marker"
+        emitevents="true"
+        cursor="rayOrigin: mouse">
+
+        <!-- Scalable Content Container -->
+        <a-entity 
+            id="scalable-content"
+            scale="0.8 0.8 0.8"
+            position="0 0 0"
+            rotation="0 0 0">
+            
+            <!-- 3D Menu Content -->
+            <a-image
+                src="https://your-hosted-image.com/food.jpg"
+                position="0 0.5 0"
+                width="1.2"
+                height="0.8"
+                transparent="true"
+                alpha-test="0.5">
+            </a-image>
+
+            <!-- Add other 3D elements here -->
+
         </a-entity>
     </a-marker>
 
-    <!-- Camera Setup -->
-    <a-entity camera></a-entity>
+    <!-- Camera Configuration -->
+    <a-entity 
+        camera
+        position="0 0 0"
+        near="0.01"
+        far="10000"
+        fov="60">
+    </a-entity>
 
 </a-scene>
 
 <script>
-// Pinch-to-Zoom Variables
-let initialDistance = null;
-let currentScale = 0.8;
+// Enhanced Pinch-Zoom Handler
+let initialScale = 0.8;
+let lastScale = 0.8;
+const scaleLimits = { min: 0.5, max: 2 };
 
-// Touch Start Handler
 document.addEventListener('touchstart', (e) => {
     if (e.touches.length === 2) {
-        initialDistance = Math.hypot(
-            e.touches[0].clientX - e.touches[1].clientX,
-            e.touches[0].clientY - e.touches[1].clientY
-        );
+        initialScale = lastScale;
     }
 });
 
-// Touch Move Handler
 document.addEventListener('touchmove', (e) => {
-    if (e.touches.length === 2) {
+    if (e.touches.length === 2 && document.getElementById('marker').object3D.visible) {
         e.preventDefault();
         
-        // Calculate current distance between fingers
-        const currentDistance = Math.hypot(
-            e.touches[0].clientX - e.touches[1].clientX,
-            e.touches[0].clientY - e.touches[1].clientY
+        // Calculate finger distance
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        const distance = Math.hypot(
+            touch2.clientX - touch1.clientX,
+            touch2.clientY - touch1.clientY
         );
+        
+        // Calculate scale factor
+        const scale = Math.min(Math.max(
+            initialScale * (distance / 200), 
+            scaleLimits.min
+        ), scaleLimits.max);
 
-        if (initialDistance !== null) {
-            // Calculate scale factor
-            let scaleFactor = currentDistance / initialDistance;
-            
-            // Apply scale limits (0.5x to 2x)
-            const newScale = Math.min(Math.max(currentScale * scaleFactor, 0.5), 2);
-            
-            // Update scale
-            const scalableContent = document.getElementById('scalable-content');
-            scalableContent.setAttribute('scale', {
-                x: newScale,
-                y: newScale,
-                z: newScale
-            });
-        }
+        // Apply scaling
+        const content = document.getElementById('scalable-content');
+        content.setAttribute('scale', ${scale} ${scale} ${scale});
+        lastScale = scale;
     }
 });
 
-// Touch End Handler
-document.addEventListener('touchend', () => {
-    // Update current scale value
-    const scalableContent = document.getElementById('scalable-content');
-    currentScale = parseFloat(scalableContent.getAttribute('scale').x);
-    initialDistance = null;
+// AR Rendering Fixes
+document.addEventListener('DOMContentLoaded', () => {
+    // Force AR.js recalibration
+    const scene = document.getElementById('scene');
+    if (scene.hasLoaded) initAR();
+    else scene.addEventListener('loaded', initAR);
+
+    function initAR() {
+        const arjs = scene.systems['arjs'];
+        arjs.displayParameters.canvasWidth = window.innerWidth;
+        arjs.displayParameters.canvasHeight = window.innerHeight;
+    }
+});
+
+// Handle marker visibility
+document.getElementById('marker').addEventListener('markerFound', () => {
+    console.log('Marker detected');
+    document.getElementById('scalable-content').setAttribute('visible', 'true');
+});
+
+document.getElementById('marker').addEventListener('markerLost', () => {
+    console.log('Marker lost');
+    document.getElementById('scalable-content').setAttribute('visible', 'false');
 });
 </script>
 
 <style>
-/* Disable default touch behaviors */
+/* Touch optimization */
 body {
     touch-action: none;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent default touch behaviors */
+canvas {
+    display: block;
+    width: 100vw !important;
+    height: 100vh !important;
 }
 </style>
 
