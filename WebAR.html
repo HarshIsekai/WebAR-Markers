@@ -2,135 +2,91 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WebAR Restaurant Menu</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>WebAR Menu with Pinch Zoom</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.2/aframe/build/aframe-ar.min.js"></script>
 </head>
 <body style="margin: 0; overflow: hidden;">
 
-    <a-scene 
-        embedded 
-        arjs="sourceType: webcam; 
-              detectionMode: mono_and_matrix; 
-              matrixCodeType: 3x3;"
-        renderer="logarithmicDepthBuffer: true;
-                  precision: medium;"
-        gesture-detector>
+<a-scene embedded arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3;">
+    
+    <!-- Scalable Content Container -->
+    <a-marker type="pattern" url="https://harshIsekai.github.io/WebAR-Markers/menu.patt">
+        <a-entity id="scalable-content" scale="0.8 0.8 0.8">
+            <!-- Menu Content Here -->
+            <a-image src="menu.jpg" position="0 0.5 0" width="1.5" height="1"></a-image>
+            <!-- Add other menu items -->
+        </a-entity>
+    </a-marker>
 
-        <!-- Scalable Content Container -->
-        <a-marker type="pattern" url="https://harshIsekai.github.io/WebAR-Markers/menu.patt">
-            <a-entity id="scalable-content" scale="0.8 0.8 0.8" position="0 0 0.5">
-                <!-- Main Menu Card -->
-                <a-image src="assets/images/menu-card.png"
-                    position="0 0.4 0"
-                    width="1.2"
-                    height="0.7"
-                    class="clickable">
-                </a-image>
+    <!-- Camera Setup -->
+    <a-entity camera></a-entity>
 
-                <!-- Menu Items -->
-                <a-entity position="-0.5 0 0">
-                    <a-image src="assets/images/burger.png" 
-                        width="0.4" 
-                        height="0.4"
-                        onclick="showInfo('burger')" 
-                        class="clickable">
-                    </a-image>
-                    <a-text value="Burger" position="0 -0.25 0" align="center" scale="0.8 0.8 0.8"></a-text>
-                </a-entity>
+</a-scene>
 
-                <a-entity position="0.5 0 0">
-                    <a-image src="assets/images/pizza.png" 
-                        width="0.4" 
-                        height="0.4"
-                        onclick="showInfo('pizza')" 
-                        class="clickable">
-                    </a-image>
-                    <a-text value="Pizza" position="0 -0.25 0" align="center" scale="0.8 0.8 0.8"></a-text>
-                </a-entity>
-            </a-entity>
-        </a-marker>
+<script>
+// Pinch-to-Zoom Variables
+let initialDistance = null;
+let currentScale = 0.8;
 
-        <!-- Camera Setup -->
-        <a-entity camera position="0 0 0"></a-entity>
-        <a-cursor></a-cursor>
+// Touch Start Handler
+document.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+        initialDistance = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
+    }
+});
 
-    </a-scene>
+// Touch Move Handler
+document.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 2) {
+        e.preventDefault();
+        
+        // Calculate current distance between fingers
+        const currentDistance = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
 
-    <script>
-        // Pinch-to-Zoom Implementation
-        let initialDistance = null;
-        let currentScale = 0.8;
-
-        function handleTouchStart(e) {
-            if (e.touches.length === 2) {
-                initialDistance = Math.hypot(
-                    e.touches[0].clientX - e.touches[1].clientX,
-                    e.touches[0].clientY - e.touches[1].clientY
-                );
-            }
-        }
-
-        function handleTouchMove(e) {
-            if (e.touches.length === 2) {
-                e.preventDefault();
-                const currentDistance = Math.hypot(
-                    e.touches[0].clientX - e.touches[1].clientX,
-                    e.touches[0].clientY - e.touches[1].clientY
-                );
-                
-                if (initialDistance !== null) {
-                    let scale = (currentDistance / initialDistance) * currentScale;
-                    scale = Math.min(Math.max(0.5, scale), 1.5); // Min/Max zoom levels
-                    
-                    const scalableContent = document.getElementById('scalable-content');
-                    scalableContent.setAttribute('scale', {
-                        x: scale,
-                        y: scale,
-                        z: scale
-                    });
-                }
-            }
-        }
-
-        function handleTouchEnd() {
+        if (initialDistance !== null) {
+            // Calculate scale factor
+            let scaleFactor = currentDistance / initialDistance;
+            
+            // Apply scale limits (0.5x to 2x)
+            const newScale = Math.min(Math.max(currentScale * scaleFactor, 0.5), 2);
+            
+            // Update scale
             const scalableContent = document.getElementById('scalable-content');
-            currentScale = parseFloat(scalableContent.getAttribute('scale').x);
-            initialDistance = null;
+            scalableContent.setAttribute('scale', {
+                x: newScale,
+                y: newScale,
+                z: newScale
+            });
         }
+    }
+});
 
-        // Add event listeners
-        document.addEventListener('touchstart', handleTouchStart);
-        document.addEventListener('touchmove', handleTouchMove, { passive: false });
-        document.addEventListener('touchend', handleTouchEnd);
+// Touch End Handler
+document.addEventListener('touchend', () => {
+    // Update current scale value
+    const scalableContent = document.getElementById('scalable-content');
+    currentScale = parseFloat(scalableContent.getAttribute('scale').x);
+    initialDistance = null;
+});
+</script>
 
-        // Menu item click handler
-        function showInfo(item) {
-            const info = {
-                burger: "Juicy beef burger with cheese and veggies - $12.99",
-                pizza: "Wood-fired pepperoni pizza - $15.99"
-            };
-            alert(info[item]);
-        }
-    </script>
-
-    <style>
-        .clickable {
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .clickable:hover {
-            opacity: 0.8;
-            transform: scale(1.05);
-        }
-        /* Prevent browser default zoom */
-        @media (pointer:coarse) {
-            body {
-                touch-action: none;
-            }
-        }
-    </style>
+<style>
+/* Disable default touch behaviors */
+body {
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+</style>
 
 </body>
 </html>
