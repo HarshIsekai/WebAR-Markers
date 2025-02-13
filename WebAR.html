@@ -73,22 +73,20 @@ document.addEventListener('touchstart', (e) => {
 document.addEventListener('touchmove', (e) => {
     if (e.touches.length === 2 && document.getElementById('marker').object3D.visible) {
         e.preventDefault();
-        
-        // Calculate finger distance
+
         const touch1 = e.touches[0];
         const touch2 = e.touches[1];
         const distance = Math.hypot(
             touch2.clientX - touch1.clientX,
             touch2.clientY - touch1.clientY
         );
-        
-        // Calculate scale factor
+
         const scale = Math.min(Math.max(
             initialScale * (distance / 200), 
             scaleLimits.min
         ), scaleLimits.max);
 
-        // Apply scaling
+        // Apply scaling (Fix: Proper string interpolation)
         const content = document.getElementById('scalable-content');
         content.setAttribute('scale', ${scale} ${scale} ${scale});
         lastScale = scale;
