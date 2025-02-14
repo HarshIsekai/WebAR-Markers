@@ -2,109 +2,157 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebAR Menu</title>
-
-    <!-- Load A-Frame and AR.js -->
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.2/aframe/build/aframe-ar.min.js"></script>
-
-    <!-- Force High-Quality Camera -->
-    <script>
-      navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-          facingMode: "environment"
-        }
-      }).then((stream) => {
-        let videoTracks = stream.getVideoTracks();
-        console.log("Using camera:", videoTracks[0].label);
-      }).catch((err) => {
-        console.error("Error accessing camera: ", err);
-      });
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fixed WebAR Menu</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
 </head>
 <body style="margin: 0; overflow: hidden;">
 
-    <!-- A-Frame AR Scene with High-Quality Camera Settings -->
-    <a-scene embedded arjs="debugUIEnabled: true; sourceType: webcam; sourceWidth: 1920; sourceHeight: 1080; displayWidth: 1280; displayHeight: 720;">
-        
-        <!-- Image Marker (menu card) -->
-        <a-marker type="pattern" url="https://harshIsekai.github.io/WebAR-Markers/menu.patt" emitevents="true" id="marker">
+<a-scene 
+    vr-mode-ui="enabled: false"
+    embedded 
+    arjs="sourceType: webcam; detectionMode: mono_and_matrix; matrixCodeType: 3x3; debugUIEnabled: false;"
+    renderer="logarithmicDepthBuffer: true; precision: medium;"
+    gesture-detector
+    id="scene">
 
-            <!-- AR Image (Appears when scanning menu) -->
-            <a-image src="https://harshIsekai.github.io/WebAR-Markers/burger.png"
-                position="0 0 0"
-                width="2"
-                height="1.2">
+    <!-- Marker-based Content -->
+    <a-marker 
+        type="pattern" 
+        url="https://harshisekai.github.io/WebAR-Markers/menu.patt"
+        id="marker"
+        emitevents="true"
+        cursor="rayOrigin: mouse">
+
+        <!-- Scalable Content Container -->
+        <a-entity 
+            id="scalable-content"
+            scale="0.8 0.8 0.8"
+            position="0 0 0"
+            rotation="0 0 0">
+            
+            <!-- 3D Menu Content -->
+            <a-image
+                src="https://harshisekai.github.io/WebAR-Markers/burger.png"
+                position="0 0.5 0"
+                width="1.2"
+                height="0.8"
+                transparent="true"
+                alpha-test="0.5">
             </a-image>
 
-        </a-marker>
+        </a-entity>
+    </a-marker>
 
-        <!-- Camera with Zoom Controls -->
-        <a-entity id="camera" camera position="0 0 5" fov="80"></a-entity>
+    <!-- Camera Configuration -->
+    <a-entity 
+        camera
+        position="0 0 0"
+        near="0.01"
+        far="10000"
+        fov="60">
+    </a-entity>
 
-    </a-scene>
+</a-scene>
 
-    <!-- JavaScript for Manual Zoom and Debugging -->
-    <script>
-        const camera = document.querySelector("#camera");
-        let fov = 80; // Initial Field of View
+<script>
+// Debugging: Track if the marker is detected or lost
+document.getElementById('marker').addEventListener('markerFound', () => {
+    console.log("✅ Marker Detected: AR Image should appear!");
+    document.getElementById('scalable-content').setAttribute('visible', 'true');
+});
 
-        function zoomCamera(delta) {
-            fov += delta;
-            fov = Math.max(50, Math.min(120, fov)); // Limit zoom range
-            camera.setAttribute("camera", "fov", fov);
+document.getElementById('marker').addEventListener('markerLost', () => {
+    console.log("❌ Marker Lost: AR Image hidden.");
+    document.getElementById('scalable-content').setAttribute('visible', 'false');
+});
+
+// Debugging: Check if menu.patt file is loading correctly
+fetch("https://harshisekai.github.io/WebAR-Markers/menu.patt")
+    .then(response => {
+        if (response.ok) {
+            console.log("✅ menu.patt file loaded successfully.");
+        } else {
+            console.error("❌ menu.patt file not found. Check the GitHub link!");
         }
+    })
+    .catch(error => console.error("❌ Error loading menu.patt:", error));
 
-        // Handle mouse wheel for desktop
-        document.addEventListener("wheel", (event) => {
-            event.preventDefault();
-            zoomCamera(event.deltaY > 0 ? 5 : -5);
-        }, { passive: false });
+// Debugging: Check if the AR image is loading
+const imageElement = document.querySelector("a-image");
+if (imageElement) {
+    console.log("✅ AR image element found in the scene.");
+    imageElement.addEventListener("loaded", () => {
+        console.log("✅ AR image successfully loaded.");
+    });
+} else {
+    console.error("❌ AR image element not found in the scene.");
+}
 
-        // Handle touch events for mobile
-        let initialDistance = null;
+// Enhanced Pinch-Zoom Handler
+let initialScale = 0.8;
+let lastScale = 0.8;
+const scaleLimits = { min: 0.5, max: 2 };
 
-        const handleTouchStart = (event) => {
-            if (event.touches.length === 2) {
-                initialDistance = Math.hypot(
-                    event.touches[0].clientX - event.touches[1].clientX,
-                    event.touches[0].clientY - event.touches[1].clientY
-                );
-            }
-        };
+document.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+        initialScale = lastScale;
+    }
+});
 
-        const handleTouchMove = (event) => {
-            if (event.touches.length === 2 && initialDistance !== null) {
-                const currentDistance = Math.hypot(
-                    event.touches[0].clientX - event.touches[1].clientX,
-                    event.touches[0].clientY - event.touches[1].clientY
-                );
-                const delta = (currentDistance - initialDistance) / 10;
-                zoomCamera(-delta);
-                initialDistance = currentDistance;
-            }
-        };
+document.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 2 && document.getElementById('marker').object3D.visible) {
+        e.preventDefault();
 
-        const handleTouchEnd = () => {
-            initialDistance = null;
-        };
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        const distance = Math.hypot(
+            touch2.clientX - touch1.clientX,
+            touch2.clientY - touch1.clientY
+        );
 
-        document.addEventListener("touchstart", handleTouchStart);
-        document.addEventListener("touchmove", handleTouchMove);
-        document.addEventListener("touchend", handleTouchEnd);
+        const scale = Math.min(Math.max(
+            initialScale * (distance / 200), 
+            scaleLimits.min
+        ), scaleLimits.max);
 
-        // Debugging: Log marker detection
-        const marker = document.querySelector("#marker");
-        marker.addEventListener("markerFound", () => {
-            console.log("Marker detected!");
-        });
-        marker.addEventListener("markerLost", () => {
-            console.log("Marker lost!");
-        });
-    </script>
+        // Apply scaling (Fix: Proper string interpolation)
+        const content = document.getElementById('scalable-content');
+        content.setAttribute('scale', `${scale} ${scale} ${scale}`);
+        lastScale = scale;
+    }
+});
+
+// AR Rendering Fixes
+document.addEventListener('DOMContentLoaded', () => {
+    // Force AR.js recalibration
+    const scene = document.getElementById('scene');
+    if (scene.hasLoaded) initAR();
+    else scene.addEventListener('loaded', initAR);
+
+    function initAR() {
+        const arjs = scene.systems['arjs'];
+        arjs.displayParameters.canvasWidth = window.innerWidth;
+        arjs.displayParameters.canvasHeight = window.innerHeight;
+    }
+});
+</script>
+
+<style>
+/* Touch optimization */
+body {
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent default touch behaviors */
+canvas {
+    display: block;
+    width: 100vw !important;
+    height: 100vh !important;
+}
+</style>
 
 </body>
 </html>
